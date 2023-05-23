@@ -191,11 +191,11 @@ while true; do
     8)
         # Restart all Docker containers
         # Check if ews is running
-        ews_process_count=$(ps -ef | grep -w "ews" | grep -v grep | wc -l)
-        if [ $ews_process_count -eq 0 ]; then
-            echo "ews process is not running. Please start ews before restarting Docker containers."
-            exit 1
-        fi
+        # ews_process_count=$(ps -ef | grep -w "ews" | grep -v grep | wc -l)
+        # if [ $ews_process_count -eq 0 ]; then
+        #     echo "ews process is not running. Please start ews before restarting Docker containers."
+        #     exit 1
+        # fi
         sudo docker rm -f $(sudo docker ps -a -q)
         sudo docker volume rm $(sudo docker volume ls -q)
         sudo rm -rf ewsposter_data
@@ -299,7 +299,7 @@ def process_hp(hp):
     last_hp = [x for x in col_to_time.find({'honeypot': hp}, allow_disk_use=True).sort('time', -1).limit(1)][0]['time']
     print('Last time:', last_hp)
 
-    for x in col_from.find({'tags.honeypot': hp, 'time': {'$gt': last_hp}}, allow_disk_use=True).sort('time', 1):
+    for x in col_from.find({'tags.honeypot': hp, 'time': {'\$gt': last_hp}}, allow_disk_use=True).sort('time', 1):
         while True:
             try:
                 col_to.insert_one(x)
@@ -366,7 +366,9 @@ while True:
         EWS_STATUS=$(ps aux | grep ews)
         SYNC_STATUS=$(ps aux | grep sync)
         MONGOD_STATUS=$(sudo systemctl status mongod)
-        whiptail --title "EWS, SYNC, and MONGOD Status" --msgbox "EWS Status:
+        whiptail --title "EWS, SYNC, and MONGOD Status" --msgbox "Script Version v09
+
+EWS Status:
 $EWS_STATUS
 
 SYNC Status:
