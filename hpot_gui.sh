@@ -15,6 +15,7 @@ while true; do
                     "11" "Download Script to Sync MongoDB (Only need to run once)" \
                     "12" "Run Script Sync MongoDB" \
                     "13" "Show status of EWS, Sync Script, and MongoDB" 3>&1 1>&2 2>&3)
+    # Script version 1.0 updated 24 May 2023
     # Depending on the chosen option, execute the corresponding command
     case $OPTION in
     1)
