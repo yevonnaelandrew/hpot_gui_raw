@@ -158,7 +158,6 @@ while true; do
         if [ $? = 0 ]; then
             # If yes, run EWSPoster
             cd ewsposter
-            # sudo nohup python3 ews.py -l 60 > ews.log &
             (crontab -l 2>/dev/null; echo "*/5 * * * * cd $(pwd) && /usr/bin/python3 ews.py >> ews.log 2>&1") | crontab -
             echo "EWSPoster added to cron. Check the ews.log file for output."
         else
@@ -196,6 +195,24 @@ while true; do
         #     echo "ews process is not running. Please start ews before restarting Docker containers."
         #     exit 1
         # fi
+
+        # Check if MongoDB is running
+        if systemctl --quiet is-active mongod
+        then
+            echo "MongoDB is running, proceeding with the execution of the commands."
+        else
+            echo "MongoDB is not running, please start MongoDB before restarting Docker containers."
+            exit 1
+        fi
+
+        # Check if ews cron job exists
+        if crontab -l | grep -q "ews"; then
+            echo "ews cron job exists, proceeding with the execution of the commands."
+        else
+            echo "ews cron job does not exist. Please add it before restarting Docker containers."
+            exit 1
+        fi
+
         sudo docker rm -f $(sudo docker ps -a -q)
         sudo docker volume rm $(sudo docker volume ls -q)
         sudo rm -rf ewsposter_data
