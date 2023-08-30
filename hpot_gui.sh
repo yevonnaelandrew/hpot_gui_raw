@@ -94,7 +94,7 @@ while true; do
                 '"Dionaea"')
                     git clone https://github.com/yevonnaelandrew/dionaea && cd dionaea
                     sudo docker build -t isif/dionaea:dionaea_hp -f Dockerfile .
-                    sudo docker run --rm -it -p 21:21 -p 42:42 -p 69:69/udp -p 80:80 -p 135:135 -p 443:443 -p 445:445 -p 1433:1433 -p 1723:1723 -p 1883:1883 -p 1900:1900/udp -p 3306:3306 -p 5060:5060 -p 5060:5060/udp -p 5061:5061 -p 11211:11211 -v dionaea:/opt/dionaea -d --restart unless-stopped isif/dionaea:dionaea_hp
+                    sudo docker run -it -p 21:21 -p 42:42 -p 69:69/udp -p 80:80 -p 135:135 -p 443:443 -p 445:445 -p 1433:1433 -p 1723:1723 -p 1883:1883 -p 1900:1900/udp -p 3306:3306 -p 5060:5060 -p 5060:5060/udp -p 5061:5061 -p 11211:11211 -v dionaea:/opt/dionaea -d --restart unless-stopped isif/dionaea:dionaea_hp
                     cd ..
                     ;;
                 '"Honeytrap"')
@@ -221,7 +221,7 @@ while true; do
         sudo docker volume create cowrie-var
         sudo docker volume create cowrie-etc
         sudo docker run -p 22:2222/tcp -p 23:2223/tcp -v cowrie-etc:/cowrie/cowrie-git/etc -v cowrie-var:/cowrie/cowrie-git/var -d --cap-drop=ALL --read-only --restart unless-stopped isif/cowrie:cowrie_hp
-        sudo docker run --rm -it -p 21:21 -p 42:42 -p 69:69/udp -p 80:80 -p 135:135 -p 443:443 -p 445:445 -p 1433:1433 -p 1723:1723 -p 1883:1883 -p 1900:1900/udp -p 3306:3306 -p 5060:5060 -p 5060:5060/udp -p 5061:5061 -p 11211:11211 -v dionaea:/opt/dionaea -d --restart unless-stopped isif/dionaea:dionaea_hp
+        sudo docker run -it -p 21:21 -p 42:42 -p 69:69/udp -p 80:80 -p 135:135 -p 443:443 -p 445:445 -p 1433:1433 -p 1723:1723 -p 1883:1883 -p 1900:1900/udp -p 3306:3306 -p 5060:5060 -p 5060:5060/udp -p 5061:5061 -p 11211:11211 -v dionaea:/opt/dionaea -d --restart unless-stopped isif/dionaea:dionaea_hp
         sudo docker run -it -p 2222:2222 -p 8545:8545 -p 5900:5900 -p 25:25 -p 5037:5037 -p 631:631 -p 389:389 -p 6379:6379 -v honeytrap:/home -d --restart unless-stopped honeytrap_test:latest
         sudo mkdir /var/lib/docker/volumes/rdpy /var/lib/docker/volumes/rdpy/_data
         sudo docker run -it -p 3389:3389 -v rdpy:/var/log -d --restart unless-stopped isif/rdpy:rdpy_hp /bin/sh -c 'python /rdpy/bin/rdpy-rdphoneypot.py -l 3389 /rdpy/bin/1 >> /var/log/rdpy.log'
@@ -275,15 +275,50 @@ while true; do
         echo "MongoDB Status: $MONGO_STATUS" >> os_info.log
         ;;
     10)
-        # Add new process to cron
-        sudo apt-get install shc -y
-        echo '#!/bin/bash
+        # Check if cron.x is already in the cron list
+        if crontab -l | grep -q "cron.x"; then
+            whiptail --title "Info" --msgbox "cron.x is already in the cron list. Skipping..." 20 70
+        else
+            # Add cron.x process to cron
+            sudo apt-get install shc -y
+            echo '#!/bin/bash
 /usr/bin/curl -X POST https://api.telegram.org/bot5623018890:AAEV2jn-HJBkubEe6loLr_h7F8p_6GUQ-DE/sendMessage -d chat_id=-869498743 -d text="$(/usr/bin/hostname && echo && date && echo && curl https://ipinfo.io/ip && echo && systemctl is-active mongod.service | awk '\''{if ($1 == "active") print "MongoDB service is running."; else print "MongoDB service is not running."}'\'' && echo && df -H | awk '\''{print $1, $2, $5}'\'' && echo && ps aux | grep ews | awk '\''{print $1, $8, $9, $11, $12, $13, $14}'\'' && echo && ps aux | grep sync | awk '\''{print $1, $8, $9, $11, $12, $13, $14}'\'' && echo && docker ps --format "table {{.Image}}\t{{.RunningFor}}\t{{.Status}}")" > /dev/null 2>&1' > cron.sh
-        shc -f cron.sh -o cron.x
-        rm -f cron.sh cron.sh.x.c
-        (crontab -l 2>/dev/null; echo "*/180 * * * * $PWD/cron.x") | crontab -
-        whiptail --title "Success" --msgbox "New process added to cron and will run in a range of 120 minutes." 20 70
-        ;;
+            shc -f cron.sh -o cron.x
+            rm -f cron.sh cron.sh.x.c
+            (crontab -l 2>/dev/null; echo "*/180 * * * * $PWD/cron.x") | crontab -
+            whiptail --title "Success" --msgbox "New process cron.x added to cron and will run in a range of 180 minutes." 20 70
+        fi
+
+        # Check if restart-docker.x is already in the cron list
+        if sudo crontab -l | grep -q "restart-docker.x"; then
+            whiptail --title "Info" --msgbox "restart-docker.x is already in the cron list. Skipping..." 20 70
+        else
+            # Add restart-docker.x process to cron
+            echo "#!/bin/bash
+cd $PWD
+sudo docker rm -f \$(sudo docker ps -a -q)
+sudo docker volume rm \$(sudo docker volume ls -q)
+sudo rm -rf ewsposter_data
+mkdir ewsposter_data ewsposter_data/log ewsposter_data/spool ewsposter_data/json
+sudo docker volume create cowrie-var
+sudo docker volume create cowrie-etc
+sudo docker run -p 22:2222/tcp -p 23:2223/tcp -v cowrie-etc:/cowrie/cowrie-git/etc -v cowrie-var:/cowrie/cowrie-git/var -d --cap-drop=ALL --read-only --restart unless-stopped isif/cowrie:cowrie_hp
+sudo docker run -it -p 21:21 -p 42:42 -p 69:69/udp -p 80:80 -p 135:135 -p 443:443 -p 445:445 -p 1433:1433 -p 1723:1723 -p 1883:1883 -p 1900:1900/udp -p 3306:3306 -p 5060:5060 -p 5060:5060/udp -p 5061:5061 -p 11211:11211 -v dionaea:/opt/dionaea -d --restart unless-stopped isif/dionaea:dionaea_hp
+sudo docker run -it -p 2222:2222 -p 8545:8545 -p 5900:5900 -p 25:25 -p 5037:5037 -p 631:631 -p 389:389 -p 6379:6379 -v honeytrap:/home -d --restart unless-stopped honeytrap_test:latest
+sudo mkdir /var/lib/docker/volumes/rdpy /var/lib/docker/volumes/rdpy/_data
+sudo docker run -it -p 3389:3389 -v rdpy:/var/log -d --restart unless-stopped isif/rdpy:rdpy_hp /bin/sh -c 'python /rdpy/bin/rdpy-rdphoneypot.py -l 3389 /rdpy/bin/1 >> /var/log/rdpy.log'
+sudo docker volume create gridpot
+sudo docker run -it -p 102:102 -p 8000:80 -p 161:161 -p 502:502 -d -v gridpot:/gridpot --restart unless-stopped isif/gridpot:gridpot_hp /bin/bash -c 'cd gridpot; gridlabd -D run_realtime=1 --server ./gridlabd/3.1/models/IEEE_13_Node_With_Houses.glm; conpot -t gridpot'
+sudo docker exec -d $(docker container ps | grep gridpot| awk '{print $1}') bash -c 'cd gridpot; conpot -t gridpot'
+sudo mkdir /var/lib/docker/volumes/elasticpot /var/lib/docker/volumes/elasticpot/_data
+sudo docker run -it -p 9200:9200/tcp -v elasticpot:/elasticpot/log -d --restart unless-stopped isif/elasticpot:elasticpot_hp /bin/sh -c 'cd elasticpot; python3 elasticpot.py'
+" > restart-docker.sh
+            shc -f restart-docker.sh -o restart-docker.x
+            rm -f restart-docker.sh restart-docker.sh.x.c
+            (crontab -l 2>/dev/null; echo "30 1 * * 1 $PWD/restart-docker.x") | crontab -
+            whiptail --title "Success" --msgbox "New process restart-docker.x added to cron and will run in a range of 180 minutes." 20 70
+        fi
+      ;;
     11)
         # Create new Python script
         echo "import pymongo
