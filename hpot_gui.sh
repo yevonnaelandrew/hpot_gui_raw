@@ -66,7 +66,7 @@ while true; do
             sudo apt-get install python3-pip -y
             mkdir ewsposter_data ewsposter_data/log ewsposter_data/spool ewsposter_data/json
             git clone --branch mongodb https://github.com/yevonnaelandrew/ewsposter && cd ewsposter
-            sudo pip3 install -r requirements.txt && sudo pip3 install influxdb
+            sudo pip3 install -r requirements.txt && sudo pip3 install influxdb && sudo pip3 install psutil && sudo pip3 install docker
         fi
         ;;
     4)
@@ -304,13 +304,13 @@ import requests
 import docker
 
 # MongoDB setup
-client = MongoClient('mongodb://localhost:27017/')  # replace with your MongoDB URI if different
-db = client['system_metrics']  # your database name
-collection = db['metrics']  # your collection name
+client = MongoClient("mongodb://localhost:27017/")
+db = client["system_metrics"]
+collection = db["metrics"]
 
 def get_public_ip():
     try:
-        response = requests.get('https://api.ipify.org')
+        response = requests.get("https://api.ipify.org")
         return response.text.strip()
     except Exception as e:
         return str(e)
@@ -318,11 +318,11 @@ def get_public_ip():
 def get_process_info():
     cpu_dict = {}
     mem_dict = {}
-    for process in psutil.process_iter(attrs=['pid', 'name', 'cpu_percent', 'memory_percent']):
-        pid = process.info['pid']
-        name = process.info['name']
-        cpu_percent = process.info['cpu_percent']
-        memory_percent = process.info['memory_percent']
+    for process in psutil.process_iter(attrs=["pid", "name", "cpu_percent", "memory_percent"]):
+        pid = process.info["pid"]
+        name = process.info["name"]
+        cpu_percent = process.info["cpu_percent"]
+        memory_percent = process.info["memory_percent"]
         cpu_dict[pid] = {"name": name, "cpu_percent": cpu_percent}
         mem_dict[pid] = {"name": name, "memory_percent": memory_percent}
     return cpu_dict, mem_dict
@@ -337,8 +337,8 @@ time.sleep(1)
 final_cpu_info, final_mem_info = get_process_info()
 
 # Sort processes by CPU and RAM usage
-sorted_cpu_processes = sorted(final_cpu_info.items(), key=lambda x: x[1]['cpu_percent'], reverse=True)[:5]
-sorted_mem_processes = sorted(final_mem_info.items(), key=lambda x: x[1]['memory_percent'], reverse=True)[:5]
+sorted_cpu_processes = sorted(final_cpu_info.items(), key=lambda x: x[1]["cpu_percent"], reverse=True)[:5]
+sorted_mem_processes = sorted(final_mem_info.items(), key=lambda x: x[1]["memory_percent"], reverse=True)[:5]
 
 # Disk information
 disk_info_list = []
@@ -354,8 +354,8 @@ for partition in psutil.disk_partitions():
 
 # Network information
 listening_addresses = []
-for conn in psutil.net_connections(kind='inet'):
-    if conn.status == 'LISTEN':
+for conn in psutil.net_connections(kind="inet"):
+    if conn.status == "LISTEN":
         listening_addresses.append(f"{conn.laddr.ip}:{conn.laddr.port}")
 
 # Initialize Docker client
@@ -396,9 +396,9 @@ additional_info = {
 
 # Combine all information
 final_output = {
-    "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-    "top5_cpu_load": [{"pid": pid, "name": data['name'], "cpu_load": data['cpu_percent']} for pid, data in sorted_cpu_processes],
-    "top5_memory_usage": [{"pid": pid, "name": data['name'], "memory_usage": data['memory_percent']} for pid, data in sorted_mem_processes],
+    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    "top5_cpu_load": [{"pid": pid, "name": data["name"], "cpu_load": data["cpu_percent"]} for pid, data in sorted_cpu_processes],
+    "top5_memory_usage": [{"pid": pid, "name": data["name"], "memory_usage": data["memory_percent"]} for pid, data in sorted_mem_processes],
     "disk_info": disk_info_list,
     "network_info": {"LISTEN": listening_addresses},
     "additional_info": additional_info,
@@ -533,17 +533,17 @@ col_to_time_metrics = client_to.DEST_COL.metricstime
 
 # Initialize the metrics time record
 def initialize_time_records():
-    col_to_time_metrics.insert_one({'metrics': 'system', 'time': '2022-01-01T00:00:00+0000'})
+    col_to_time_metrics.insert_one({'metrics': 'system', 'timestamp': '2022-01-01T00:00:00+0000'})
 
 cnt = 0
 
 def process_metrics():
-    last_record_time = [x for x in col_to_time_metrics.find({'metrics': 'system'}).sort('time', -1).limit(1)][0]['time']
+    last_record_time = [x for x in col_to_time_metrics.find({'metrics': 'system'}).sort('timestamp', -1).limit(1)][0]['timestamp']
 
-    for x in col_from.find({'time': {'\$gt': last_record_time}}, allow_disk_use=True).sort('time', 1):
+    for x in col_from_metrics.find({'timestamp': {'\$gt': last_record_time}}, allow_disk_use=True).sort('timestamp', 1):
         try:
             col_to_metrics.insert_one(x)
-            col_to_time_metrics.insert_one({'metrics': 'system', 'time': x['time']})
+            col_to_time_metrics.insert_one({'metrics': 'system', 'timestamp': x['timestamp']})
         except pymongo.errors.DuplicateKeyError:
             print('Duplicate document. Skipping...')
         except pymongo.errors.ServerSelectionTimeoutError:
