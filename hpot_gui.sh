@@ -401,13 +401,12 @@ final_output = {
     "top5_memory_usage": [{"pid": pid, "name": data['name'], "memory_usage": data['memory_percent']} for pid, data in sorted_mem_processes],
     "disk_info": disk_info_list,
     "network_info": {"LISTEN": listening_addresses},
-    "additional_info": additional_info
+    "additional_info": additional_info,
+    "version" : "1.0.0"
 }
 
 # Convert to JSON
 final_output_json = json.dumps(final_output, indent=4)
-
-# print(final_output_json)
 
 # Insert into MongoDB
 collection.insert_one(final_output)' > stats.py
@@ -522,6 +521,58 @@ while True:
         print('Other errors:', str(e))
         time.sleep(60)" > script_sync_mongodb.py
 
+        echo "import pymongo
+import time
+
+client_from = pymongo.MongoClient('127.0.0.1:27017')
+client_to = pymongo.MongoClient('mongodb://DB_ID:DB_PASSWORD@103.19.110.150:27017')
+
+col_from_metrics = client_from.system_metrics.metrics
+col_to_metrics = client_to.DEST_COL.metrics
+col_to_time_metrics = client_to.DEST_COL.metricstime
+
+# Initialize the metrics time record
+def initialize_time_records():
+    col_to_time_metrics.insert_one({'metrics': 'system', 'time': '2022-01-01T00:00:00+0000'})
+
+cnt = 0
+
+def process_metrics():
+    last_record_time = [x for x in col_to_time_metrics.find({'metrics': 'system'}).sort('time', -1).limit(1)][0]['time']
+
+    for x in col_from.find({'time': {'\$gt': last_record_time}}, allow_disk_use=True).sort('time', 1):
+        try:
+            col_to_metrics.insert_one(x)
+            col_to_time_metrics.insert_one({'metrics': 'system', 'time': x['time']})
+        except pymongo.errors.DuplicateKeyError:
+            print('Duplicate document. Skipping...')
+        except pymongo.errors.ServerSelectionTimeoutError:
+            print('Server timeout. Sleeping...')
+            time.sleep(60)
+        except Exception as e:
+            print(f'Unexpected error: {e}')
+            time.sleep(10)
+
+initialize_time_records()
+
+while True:
+    try:
+        client_to.server_info()
+        client_from.server_info()
+        print('Connection is OK')
+        
+        process_metrics()
+
+        print('One loop done')
+        time.sleep(60)
+
+    except pymongo.errors.ServerSelectionTimeoutError as err:
+        print(err)
+        time.sleep(60)
+    except Exception as e:
+        print('Other errors:', str(e))
+        time.sleep(60)" > script_metrics.py
+
         # Ask user for input
         DB_ID=$(whiptail --inputbox "Enter DB_ID (Get from CSCISAC):" 8 78 --title "User ID Input" 3>&1 1>&2 2>&3)
         DB_PASSWORD=$(whiptail --inputbox "Enter DB_PASSWORD (Get from CSCISAC):" 8 78 --title "Password Input" 3>&1 1>&2 2>&3)
@@ -531,6 +582,9 @@ while True:
         sed -i "s/DB_ID/$DB_ID/g" script_sync_mongodb.py
         sed -i "s/DB_PASSWORD/$DB_PASSWORD/g" script_sync_mongodb.py
         sed -i "s/DEST_COL/$DEST_COL/g" script_sync_mongodb.py
+        sed -i "s/DB_ID/$DB_ID/g" script_metrics.py
+        sed -i "s/DB_PASSWORD/$DB_PASSWORD/g" script_metrics.py
+        sed -i "s/DEST_COL/$DEST_COL/g" script_metrics.py
         ;;
     12)
         # Check if script_sync_mongodb.py is running in the background
@@ -539,6 +593,14 @@ while True:
         else
             # Run script_sync_mongodb.py as sudo
             sudo nohup python3 script_sync_mongodb.py &
+        fi
+
+        # Check if script_metrics.py is running in the background
+        if ps aux | grep -v grep | grep "script_metrics.py" > /dev/null; then
+            whiptail --title "Warning" --msgbox "script_metrics.py is already running in the background. Please stop it before running it again." 8 78
+        else
+            # Run script_metrics.py as sudo
+            sudo nohup python3 script_metrics.py &
         fi
         ;;
     13)
