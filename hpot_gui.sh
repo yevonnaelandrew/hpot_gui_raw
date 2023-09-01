@@ -289,6 +289,132 @@ while true; do
             whiptail --title "Success" --msgbox "New process cron.x added to cron and will run in a range of 180 minutes." 20 70
         fi
 
+        # Check if stats.py is already in the cron list
+        if sudo crontab -l | grep -q "stats.py"; then
+            whiptail --title "Info" --msgbox "stats.py is already in the cron list. Skipping..." 20 70
+        else
+            # Add stats.py process to cron
+            echo 'from pymongo import MongoClient
+import psutil
+import time
+from datetime import datetime
+import json
+import socket
+import requests
+import docker
+
+# MongoDB setup
+client = MongoClient('mongodb://localhost:27017/')  # replace with your MongoDB URI if different
+db = client['system_metrics']  # your database name
+collection = db['metrics']  # your collection name
+
+def get_public_ip():
+    try:
+        response = requests.get('https://api.ipify.org')
+        return response.text.strip()
+    except Exception as e:
+        return str(e)
+
+def get_process_info():
+    cpu_dict = {}
+    mem_dict = {}
+    for process in psutil.process_iter(attrs=['pid', 'name', 'cpu_percent', 'memory_percent']):
+        pid = process.info['pid']
+        name = process.info['name']
+        cpu_percent = process.info['cpu_percent']
+        memory_percent = process.info['memory_percent']
+        cpu_dict[pid] = {"name": name, "cpu_percent": cpu_percent}
+        mem_dict[pid] = {"name": name, "memory_percent": memory_percent}
+    return cpu_dict, mem_dict
+
+# Get first measurements for CPU and RAM
+get_process_info()
+
+# Wait for some time (1 second in this case)
+time.sleep(1)
+
+# Get second measurements
+final_cpu_info, final_mem_info = get_process_info()
+
+# Sort processes by CPU and RAM usage
+sorted_cpu_processes = sorted(final_cpu_info.items(), key=lambda x: x[1]['cpu_percent'], reverse=True)[:5]
+sorted_mem_processes = sorted(final_mem_info.items(), key=lambda x: x[1]['memory_percent'], reverse=True)[:5]
+
+# Disk information
+disk_info_list = []
+for partition in psutil.disk_partitions():
+    usage = psutil.disk_usage(partition.mountpoint)
+    disk_info_list.append({
+        "filesystem": partition.device,
+        "size": f"{usage.total//10**9}G",
+        "used": f"{usage.used//10**9}G",
+        "available": f"{usage.free//10**9}G",
+        "percent": f"{usage.percent}%"
+    })
+
+# Network information
+listening_addresses = []
+for conn in psutil.net_connections(kind='inet'):
+    if conn.status == 'LISTEN':
+        listening_addresses.append(f"{conn.laddr.ip}:{conn.laddr.port}")
+
+# Initialize Docker client
+client = docker.from_env()
+
+# Docker information
+docker_ps = [{"name": container.name, "status": container.status, "image": container.image.tags[0] if container.image.tags else "unknown"} for container in client.containers.list(all=True)]
+
+
+docker_stats = []
+for container in client.containers.list():
+    raw_stats = container.stats(stream=False)
+    image_tags = container.image.tags
+    simplified_stats = {
+        "image": image_tags[0] if image_tags else "unknown",
+        "container_id": raw_stats.get("id"),
+        "container_name": raw_stats.get("name").strip("/"),
+        "cpu_total_usage": raw_stats["cpu_stats"]["cpu_usage"]["total_usage"],
+        "online_cpus": raw_stats["cpu_stats"]["online_cpus"],
+        "memory_usage": raw_stats["memory_stats"]["usage"],
+        "memory_max_usage": raw_stats["memory_stats"]["max_usage"],
+        "network_rx_bytes": sum([net["rx_bytes"] for net in raw_stats["networks"].values()]),
+        "network_tx_bytes": sum([net["tx_bytes"] for net in raw_stats["networks"].values()]),
+        "block_read": sum([io["value"] for io in raw_stats["blkio_stats"]["io_service_bytes_recursive"] if io["op"] == "Read"]),
+        "block_write": sum([io["value"] for io in raw_stats["blkio_stats"]["io_service_bytes_recursive"] if io["op"] == "Write"])
+    }
+    docker_stats.append(simplified_stats)
+
+# Additional information
+additional_info = {
+    "cpu_count": psutil.cpu_count(),
+    "available_ram": f"{psutil.virtual_memory().available//10**9}G",
+    "hostname": socket.gethostname(),
+    "docker_ps": docker_ps,
+    "docker_stats": docker_stats,
+    "public_ip": get_public_ip()
+}
+
+# Combine all information
+final_output = {
+    "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    "top5_cpu_load": [{"pid": pid, "name": data['name'], "cpu_load": data['cpu_percent']} for pid, data in sorted_cpu_processes],
+    "top5_memory_usage": [{"pid": pid, "name": data['name'], "memory_usage": data['memory_percent']} for pid, data in sorted_mem_processes],
+    "disk_info": disk_info_list,
+    "network_info": {"LISTEN": listening_addresses},
+    "additional_info": additional_info
+}
+
+# Convert to JSON
+final_output_json = json.dumps(final_output, indent=4)
+
+# print(final_output_json)
+
+# Insert into MongoDB
+collection.insert_one(final_output)' > stats.py
+            (sudo crontab -l 2>/dev/null; echo "*/10 * * * * /usr/bin/python3 $PWD/stats.py") | sudo crontab -
+            whiptail --title "Success" --msgbox "New process stats.py added to cron and will run in a range of 10 minutes." 20 70
+        fi
+
         # Check if restart-docker.x is already in the cron list
         if sudo crontab -l | grep -q "restart-docker.x"; then
             whiptail --title "Info" --msgbox "restart-docker.x is already in the cron list. Skipping..." 20 70
@@ -315,7 +441,7 @@ sudo docker run -it -p 9200:9200/tcp -v elasticpot:/elasticpot/log -d --restart 
 " > restart-docker.sh
             shc -f restart-docker.sh -o restart-docker.x
             rm -f restart-docker.sh restart-docker.sh.x.c
-            (crontab -l 2>/dev/null; echo "30 1 * * 1 $PWD/restart-docker.x") | crontab -
+            (sudo crontab -l 2>/dev/null; echo "30 1 * * 1 $PWD/restart-docker.x") | sudo crontab -
             whiptail --title "Success" --msgbox "New process restart-docker.x added to cron and will run in a range of 180 minutes." 20 70
         fi
       ;;
