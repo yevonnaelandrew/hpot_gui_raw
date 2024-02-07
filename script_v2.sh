@@ -151,6 +151,16 @@ if [ -f "$FLAG_FILE" ]; then
     cd ewsposter && (crontab -l 2>/dev/null; echo "*/5 * * * * cd $(pwd) && /usr/bin/python3 ews.py >> ews.log 2>&1") | crontab -
     cd ..
     cd fluent && rm -f fluent.conf && wget https://raw.githubusercontent.com/yevonnaelandrew/hpot_automation/main/fluent.conf
+    echo "User id untuk database:"
+    read replace_id
+    echo "Password untuk database:"
+    read replace_pass
+    echo "Nama tenant/db (masukkan persis sesuai yang dikasih):"
+    read replace_db
+
+    sed -i "s/fillthename/$replace_id/g" fluent.conf
+    sed -i "s/fillthepass/$replace_pass/g" fluent.conf
+    sed -i "s/fillthedb/$replace_db/g" fluent.conf
 else
     echo "Starting the script normally."
 
