@@ -158,9 +158,9 @@ if [ -f "$FLAG_FILE" ]; then
     echo "Nama tenant/db (masukkan persis sesuai yang dikasih):"
     read replace_db
 
-    sed -i "s/fillthename/$replace_id/g" fluent.conf
-    sed -i "s/fillthepass/$replace_pass/g" fluent.conf
-    sed -i "s/fillthedb/$replace_db/g" fluent.conf
+    sudo sed -i "s/fillthename/$replace_id/g" fluent.conf
+    sudo sed -i "s/fillthepass/$replace_pass/g" fluent.conf
+    sudo sed -i "s/fillthedb/$replace_db/g" fluent.conf
 else
     echo "Starting the script normally."
 
