@@ -141,14 +141,15 @@ if [ -f "$FLAG_FILE" ]; then
 
     sudo docker run -d --restart always -v conpot:/data -p 8000:8800 -p 10201:10201 -p 5020:5020 -p 16100:16100/udp -p 47808:47808/udp -p 6230:6230/udp -p 2121:2121 -p 6969:6969/udp -p 44818:44818 192.227.252.79:5000/conpot
 
-    git clone https://github.com/yevonnaelandrew/ewsposter && cd ewsposter && git checkout dionaea_fluentd && sudo pip3 install -r requirements.txt && sudo pip3 install influxdb && cd ..
     sudo apt-get install python3-pip -y
+    git clone https://github.com/yevonnaelandrew/ewsposter && cd ewsposter && git checkout dionaea_fluentd && sudo pip3 install -r requirements.txt && sudo pip3 install influxdb && cd ..
     mkdir ewsposter_data ewsposter_data/log ewsposter_data/spool ewsposter_data/json
     current_dir=$(pwd)
     nodeid=$(hostname)
     sed -i "s|/home/ubuntu|$current_dir|g" ewsposter/ews.cfg
     sed -i "s|ASEAN-ID-SGU|$nodeid|g" ewsposter/ews.cfg
-    cd ewsposter && (crontab -l 2>/dev/null; echo "*/5 * * * * cd $(pwd) && /usr/bin/python3 ews.py >> ews.log 2>&1") | crontab -
+    cd ewsposter
+    (crontab -l 2>/dev/null; echo "*/5 * * * * cd $(pwd) && /usr/bin/python3 ews.py >> ews.log 2>&1") | crontab -
     cd ..
     cd fluent && sudo rm -f fluent.conf && sudo wget https://raw.githubusercontent.com/yevonnaelandrew/hpot_gui_raw/main/fluent.conf
     echo "User id untuk database:"
