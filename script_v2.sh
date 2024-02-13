@@ -72,7 +72,7 @@ sudo sysctl -p
 if [ -f "$FLAG_FILE" ]; then
     # Flag file exists, so continue from the restart point
     echo "Restart detected. Continuing from the restart point."
-    rm "$FLAG_FILE"
+    # rm "$FLAG_FILE"
 
     wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.21_amd64.deb && sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2.21_amd64.deb
 
@@ -113,15 +113,16 @@ if [ -f "$FLAG_FILE" ]; then
 
     read -p "After this step, your SSH port will be changed into 228888. Make sure the port is opened there. Do you understand? (y/n) " -r
 
-    echo '{ "insecure-registries":["192.227.252.79:5000"] }' | sudo tee /etc/docker/daemon.json && sudo systemctl restart docker
+    echo '{ "insecure-registries":["103.175.218.193:5000"] }' | sudo tee /etc/docker/daemon.json && sudo systemctl restart docker
 
     sudo sed -i -e "s/#Port 22/Port 22888/g" /etc/ssh/sshd_config && sudo service sshd restart
 
-    sudo docker pull 192.227.252.79:5000/cowrie:latest
-    sudo docker pull 192.227.252.79:5000/conpot:latest
-    sudo docker pull 192.227.252.79:5000/rdpy:latest
-    sudo docker pull 192.227.252.79:5000/elasticpot:latest
-    sudo docker pull 192.227.252.79:5000/dionaea:latest
+    sudo docker pull 103.175.218.193:5000/cowrie:latest
+    sudo docker pull 103.175.218.193:5000/conpot:latest
+    sudo docker pull 103.175.218.193:5000/rdpy:latest
+    sudo docker pull 103.175.218.193:5000/elasticpot:latest
+    sudo docker pull 103.175.218.193:5000/dionaea:latest
+    sudo docker pull 103.175.218.193:5000/honeytrap:latest
 
     sudo docker volume create cowrie-var
     sudo docker volume create cowrie-etc
