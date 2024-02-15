@@ -165,6 +165,14 @@ if [ -f "$FLAG_FILE" ]; then
     sudo sed -i "s/fillthename/$replace_id/g" fluent.conf
     sudo sed -i "s/fillthepass/$replace_pass/g" fluent.conf
     sudo sed -i "s/fillthedb/$replace_db/g" fluent.conf
+    
+    cd
+    wget https://repo.zabbix.com/zabbix/6.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.4-1+ubuntu22.04_all.deb
+    sudo dpkg -i zabbix-release_6.4-1+ubuntu22.04_all.deb
+    sudo apt update -y
+    sudo apt install zabbix-agent2 zabbix-agent2-plugin-* -y
+    sudo systemctl restart zabbix-agent2
+    sudo systemctl enable zabbix-agent2
 else
     echo "Starting the script normally."
 
