@@ -175,7 +175,8 @@ if [ -f "$FLAG_FILE" ]; then
     sudo systemctl enable zabbix-agent2
 
     sudo sed -i '/^ServerActive=/c\ServerActive=103.19.110.157' /etc/zabbix/zabbix_agent2.conf || echo 'ServerActive=103.19.110.157' | sudo tee -a /etc/zabbix/zabbix_agent2.conf
-    sudo sed -i '/^Hostname=/c\Hostname=$replace_db' /etc/zabbix/zabbix_agent2.conf || echo 'Hostname=$replace_db' | sudo tee -a /etc/zabbix/zabbix_agent2.conf
+    sudo sed -i "/^Hostname=/c\Hostname=${replace_db}" /etc/zabbix/zabbix_agent2.conf || echo "Hostname=${replace_db}" | sudo tee -a /etc/zabbix/zabbix_agent2.conf
+    sudo systemctl restart zabbix-agent2
     
 else
     echo "Starting the script normally."
