@@ -152,7 +152,7 @@ if [ -f "$FLAG_FILE" ]; then
     sed -i "s|/home/ubuntu|$current_dir|g" ewsposter/ews.cfg
     sed -i "s|ASEAN-ID-SGU|$nodeid|g" ewsposter/ews.cfg
     cd ewsposter
-    (crontab -l 2>/dev/null; echo "*/5 * * * * cd $(pwd) && /usr/bin/python3 ews.py >> ews.log 2>&1") | crontab -
+    (crontab -l 2>/dev/null; echo "*/5 * * * * cd ${current_dir}/ewsposter && /usr/bin/python3 ews.py >> ews.log 2>&1") | sudo crontab -
     cd ..
     cd fluent && sudo rm -f fluent.conf && sudo wget https://raw.githubusercontent.com/yevonnaelandrew/hpot_gui_raw/main/fluent.conf
     echo "User id untuk database:"
