@@ -153,6 +153,22 @@ if [ -f "$FLAG_FILE" ]; then
     sed -i "s|ASEAN-ID-SGU|$nodeid|g" ewsposter/ews.cfg
     cd ewsposter
     (crontab -l 2>/dev/null; echo "*/5 * * * * cd ${current_dir}/ewsposter && /usr/bin/python3 ews.py >> ews.log 2>&1") | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/cowrie-var/_data/log/cowrie/cowrie.json')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/cowrie-var/_data/log/cowrie/cowrie.pos')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/honeytrap/_data/honeytrap.log')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/honeytrap/_data/honeytrap.pos')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/elasticpot/_data/elasticpot.json')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/elasticpot/_data/elasticpot.pos')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/rdpy/_data/rdpy.log')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/rdpy/_data/rdpy.pos')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/dionaea/_data/var/lib/dionaea/ews.json')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/dionaea/_data/var/lib/dionaea/dionaea_ews.pos')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/dionaea/_data/var/lib/dionaea/dionaea.json')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/dionaea/_data/var/lib/dionaea/dionaea.pos')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/conpot/_data/conpot.json')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/conpot/_data/conpot.pos')" | sudo crontab -
+    echo "$(sudo crontab -l ; echo '@weekly rm -r /var/lib/docker/volumes/dionaea/_data/var/lib/dionaea/binaries/*')" | sudo crontab -
+
     cd ..
     cd fluent && sudo rm -f fluent.conf && sudo wget https://raw.githubusercontent.com/yevonnaelandrew/hpot_gui_raw/main/fluent.conf
     echo "User id untuk database:"
