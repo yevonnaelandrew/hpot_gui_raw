@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version 2.0.1 - 15 February 2024
+# Version 2.0.2 - 23 February 2024
 
 echo '
    __ __                                 __    ____           __         __ __
