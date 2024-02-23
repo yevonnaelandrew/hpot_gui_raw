@@ -134,7 +134,7 @@ if [ -f "$FLAG_FILE" ]; then
 
     sudo docker run -p 22:22/tcp -p 23:23/tcp -v cowrie-etc:/cowrie/cowrie-git/etc -v cowrie-var:/cowrie/cowrie-git/var -d --cap-drop=ALL --read-only --restart unless-stopped 103.175.218.193:5000/cowrie
 
-    sudo docker run -it -p 21:21 -p 42:42 -p 69:69/udp -p 80:80 -p 135:135 -p 443:443 -p 445:445 -p 1433:1433 -p 1723:1723 -p 1883:1883 -p 1900:1900/udp -p 3306:3306 -p 5060:5060 -p 5060:5060/udp -p 5061:5061 -p 11211:11211 -v dionaea:/opt/dionaea -d --restart unless-stopped 103.175.218.193:5000/dionaea
+    sudo docker run -it -p 21:21 -p 42:42 -p 69:69/udp -p 80:80 -p 135:135 -p 443:443 -p 445:445 -p 1433:1433 -p 1723:1723 -p 1883:1883 -p 3306:3306 -p 5060:5060 -p 5060:5060/udp -p 5061:5061 -p 11211:11211 -v dionaea:/opt/dionaea -d --restart unless-stopped 103.175.218.193:5000/dionaea
 
     sudo docker run -it -p 3389:3389 -v rdpy:/var/log -d --restart unless-stopped 103.175.218.193:5000/rdpy /bin/sh -c 'python /rdpy/bin/rdpy-rdphoneypot.py -l 3389 /rdpy/bin/1 >> /var/log/rdpy.log'
 
@@ -153,21 +153,6 @@ if [ -f "$FLAG_FILE" ]; then
     sed -i "s|ASEAN-ID-SGU|$nodeid|g" ewsposter/ews.cfg
     cd ewsposter
     (crontab -l 2>/dev/null; echo "*/5 * * * * cd ${current_dir}/ewsposter && /usr/bin/python3 ews.py >> ews.log 2>&1") | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/cowrie-var/_data/log/cowrie/cowrie.json')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/cowrie-var/_data/log/cowrie/cowrie.pos')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/honeytrap/_data/honeytrap.log')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/honeytrap/_data/honeytrap.pos')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/elasticpot/_data/elasticpot.json')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/elasticpot/_data/elasticpot.pos')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/rdpy/_data/rdpy.log')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/rdpy/_data/rdpy.pos')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/dionaea/_data/var/lib/dionaea/ews.json')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/dionaea/_data/var/lib/dionaea/dionaea_ews.pos')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/dionaea/_data/var/lib/dionaea/dionaea.json')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/dionaea/_data/var/lib/dionaea/dionaea.pos')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/conpot/_data/conpot.json')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm /var/lib/docker/volumes/conpot/_data/conpot.pos')" | sudo crontab -
-    echo "$(sudo crontab -l ; echo '@weekly rm -r /var/lib/docker/volumes/dionaea/_data/var/lib/dionaea/binaries/*')" | sudo crontab -
 
     cd ..
     cd fluent && sudo rm -f fluent.conf && sudo wget https://raw.githubusercontent.com/yevonnaelandrew/hpot_gui_raw/main/fluent.conf
