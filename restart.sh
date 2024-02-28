@@ -16,7 +16,8 @@ sudo docker run -it -p 9200:9200/tcp -v elasticpot:/elasticpot/log -d --restart 
 sudo docker run -it -p 2222:2222 -p 8545:8545 -p 5900:5900 -p 25:25 -p 5037:5037 -p 631:631 -p 389:389 -p 6379:6379 -v honeytrap:/home -d --restart unless-stopped 103.175.218.193:5000/honeytrap
 sudo docker run -d --restart always -v conpot:/data -p 8000:8800 -p 10201:10201 -p 5020:5020 -p 16100:16100/udp -p 47808:47808/udp -p 6230:6230/udp -p 2121:2121 -p 6969:6969/udp -p 44818:44818 103.175.218.193:5000/conpot
 
-sudo kill -HUP $(ps aux | grep 'fluentd -c' | awk '{print $2}'| head -1)
+# sudo kill -HUP $(ps aux | grep 'fluentd -c' | awk '{print $2}'| head -1)
+pgrep -f 'fluentd -c' | head -1 | xargs sudo kill -HUP
 
 sudo rm -rf ewsposter_data
 mkdir ewsposter_data ewsposter_data/log ewsposter_data/spool ewsposter_data/json
